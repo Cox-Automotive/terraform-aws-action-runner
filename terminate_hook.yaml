@@ -1,0 +1,42 @@
+description: |-
+  # Command Document 
+
+  To de-register GitHub Actions Runner
+schemaVersion: '0.3'
+assumeRole: '{{automationAssumeRole}}'
+parameters:
+  automationAssumeRole:
+    type: String
+    description: (Required) The ARN of the role that allows automation to perform the actions on your behalf.
+  ASGName:
+    type: String
+  InstanceId:
+    type: String
+  LCHName:
+    type: String
+mainSteps:
+  - name: deregister
+    action: 'aws:runCommand'
+    inputs:
+      DocumentName: AWS-RunShellScript
+      InstanceIds: ['{{InstanceId}}']
+      Parameters:
+        executionTimeout: '120'
+        commands:
+          - cd /opt/actions-runner/
+          - sudo /opt/actions-runner/svc.sh stop
+          - sudo /opt/actions-runner/svc.sh uninstall
+          - export AWS_REGION=us-east-1
+          - 'PAT=$(aws ssm get-parameter --name "${ghe_pat_ssm_name}" --with-decryption --region us-east-1 | jq .Parameter.Value -r)'
+          - 'token=$(curl -s -XPOST -H "authorization: token $PAT" ${ghes_base_url}/api/v3/enterprises/cox-automotive/actions/runners/remove-token | jq -r .token)'
+          - su gheactions -c "./config.sh remove --token $token"
+    onFailure: Continue
+  - name: terminate
+    action: 'aws:executeAwsApi'
+    inputs:
+      Service: autoscaling
+      Api: CompleteLifecycleAction
+      LifecycleActionResult: CONTINUE
+      AutoScalingGroupName: '{{ASGName}}'
+      InstanceId: '{{InstanceId}}'
+      LifecycleHookName: '{{LCHName}}'

@@ -1,0 +1,43 @@
+#cloud-config
+# vim: syntax=yaml
+#
+users:
+  - default
+  - name: gheactions
+    groups: docker
+    sudo: 
+      - ALL=(ALL) NOPASSWD:/opt/actions-runner/svc.sh
+      - ALL=(ALL) NOPASSWD:/opt/actions-runner/config.sh
+    
+package_update: ${package_upgrade}
+package_upgrade: ${package_upgrade}
+runcmd:
+ - amazon-linux-extras install epel -y
+ - yum install -y awslogs wget inotify-tools git git-lfs jq stress curl vim htop unzip aria2  cmake  haveged mediainfo R zstd java-11-amazon-corretto-headless maven bzip2 python3 python3-pip gcc zlib-devel bzip2-devel readline-devel sqlite sqlite-devel openssl11-devel tk-devel libffi-devel xz-devel
+ # docker-compose & yamllint won't install due to python 3.6 vs 3.7
+ - systemctl start awslogsd
+ - systemctl enable awslogsd.service
+# Steps for GitHub runner 
+ - mkdir -p /opt/hostedtoolcache
+ - chown -R gheactions:gheactions /opt/hostedtoolcache
+ - mkdir -p /opt/actions-runner
+ - echo "AGENT_TOOLSDIRECTORY=/opt/hostedtoolcache" > /opt/actions-runner/.env
+ - git clone https://github.com/pyenv/pyenv.git /home/gheactions/.pyenv
+ - chown -R gheactions:gheactions /opt/actions-runner
+ - cd /opt/actions-runner
+ - 'PAT=$(aws ssm get-parameter --name "${ghe_pat_ssm_name}" --with-decryption --region us-east-1 | jq .Parameter.Value -r)'
+ - 'export RUNNERTOKEN=$(curl -s -XPOST -H "authorization: token $PAT" ${ghes_base_url}/api/v3/${ghes_runner_target}/actions/runners/registration-token | jq -r .token)'
+ - curl -L -o /opt/actions-runner/actions-runner-linux-x64.tar.gz  https://github.com/actions/runner/releases/download/v2.281.1/actions-runner-linux-x64-2.281.1.tar.gz
+ - tar xzf /opt/actions-runner/actions-runner-linux-x64.tar.gz --directory /opt/actions-runner
+ - RUNNER_ALLOW_RUNASROOT=1 /opt/actions-runner/config.sh --url ${ghes_base_url}/${ghes_runner_target} --token $RUNNERTOKEN --labels "${ghes_runner_labels}" --runnergroup "${ghes_runner_group}" --unattended
+ - /opt/actions-runner/svc.sh install gheactions
+ - chown -R gheactions:gheactions /opt/actions-runner
+ - /opt/actions-runner/svc.sh start
+ - sleep 3s
+ - /opt/actions-runner/svc.sh status
+# - curl -Ls https://raw.githubusercontent.com/newrelic/newrelic-cli/3e36b93140ca3b754e76973dc4abcee370935072/scripts/install.sh | bash && sudo NEW_RELIC_API_KEY=${nr_key} NEW_RELIC_ACCOUNT_ID=${nr_account} /usr/local/bin/newrelic install
+# final_message
+# default: cloud-init boot finished at $TIMESTAMP. Up $UPTIME seconds
+# this message is written by cloud-final when the system is finished
+# its first boot
+final_message: "The system is finally up, after $UPTIME seconds"
