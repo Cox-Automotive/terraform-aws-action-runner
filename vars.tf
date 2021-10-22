@@ -109,23 +109,23 @@ variable "ghes_runner_target" {
 variable "ghes_runner_labels" {
   type      = string
   sensitive = true
-  default = ""
+  default   = ""
 }
 
 variable "ghes_runner_group" {
   type      = string
   sensitive = true
-  default = "Test Enterprise Runners"
+  default   = "Test Enterprise Runners"
 }
 
 variable "pool_size_min" {
   type      = number
   sensitive = false
-  default = 4
+  default   = 4
 }
 
 variable "pool_size_max" {
   type      = number
   sensitive = false
-  default = 4
+  default   = 4
 }

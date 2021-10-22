@@ -1,53 +1,53 @@
 resource "aws_autoscaling_policy" "ghes_runner_scale_up" {
-  name = "ghes_runner_up_${var.environment}"
-  scaling_adjustment = 1
-  adjustment_type = "ChangeInCapacity"
+  name                   = "ghes_runner_up_${var.environment}"
+  scaling_adjustment     = 1
+  adjustment_type        = "ChangeInCapacity"
   autoscaling_group_name = aws_autoscaling_group.ghes_runner.name
-  cooldown = 300
+  cooldown               = 300
 }
 
 resource "aws_autoscaling_policy" "ghes_runner_scale_down" {
-  name = "ghes_runner_down_${var.environment}"
-  scaling_adjustment = -1
-  adjustment_type = "ChangeInCapacity"
+  name                   = "ghes_runner_down_${var.environment}"
+  scaling_adjustment     = -1
+  adjustment_type        = "ChangeInCapacity"
   autoscaling_group_name = aws_autoscaling_group.ghes_runner.name
-  cooldown = 300
+  cooldown               = 300
 }
 
 resource "aws_cloudwatch_metric_alarm" "cpu-high" {
-    alarm_name = "cpu-util-high-runner-${var.environment}"
-    comparison_operator = "GreaterThanOrEqualToThreshold"
-    evaluation_periods = "2"
-    metric_name = "CPUUtilization"
-    namespace = "AWS/EC2"
-    period = "120"
-    statistic = "Average"
-    threshold = "10"
-    alarm_description = "This metric monitors ec2 CPU for high utilization on agent hosts"
-    alarm_actions = [
-        aws_autoscaling_policy.ghes_runner_scale_up.arn
-    ]
-    dimensions = {
-        AutoScalingGroupName = aws_autoscaling_group.ghes_runner.name
-    }
+  alarm_name          = "cpu-util-high-runner-${var.environment}"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = "2"
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = "120"
+  statistic           = "Average"
+  threshold           = "10"
+  alarm_description   = "This metric monitors ec2 CPU for high utilization on agent hosts"
+  alarm_actions = [
+    aws_autoscaling_policy.ghes_runner_scale_up.arn
+  ]
+  dimensions = {
+    AutoScalingGroupName = aws_autoscaling_group.ghes_runner.name
+  }
 }
 
 resource "aws_cloudwatch_metric_alarm" "cpu-low" {
-    alarm_name = "cpu-util-low-runner-${var.environment}"
-    comparison_operator = "LessThanOrEqualToThreshold"
-    evaluation_periods = "2"
-    metric_name = "CPUUtilization"
-    namespace = "AWS/EC2"
-    period = "120"
-    statistic = "Average"
-    threshold = "5"
-    alarm_description = "This metric monitors ec2 CPU for low utilization on agent hosts"
-    alarm_actions = [
-        aws_autoscaling_policy.ghes_runner_scale_down.arn
-    ]
-    dimensions = {
-        AutoScalingGroupName = aws_autoscaling_group.ghes_runner.name
-    }
+  alarm_name          = "cpu-util-low-runner-${var.environment}"
+  comparison_operator = "LessThanOrEqualToThreshold"
+  evaluation_periods  = "2"
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = "120"
+  statistic           = "Average"
+  threshold           = "5"
+  alarm_description   = "This metric monitors ec2 CPU for low utilization on agent hosts"
+  alarm_actions = [
+    aws_autoscaling_policy.ghes_runner_scale_down.arn
+  ]
+  dimensions = {
+    AutoScalingGroupName = aws_autoscaling_group.ghes_runner.name
+  }
 }
 
 
@@ -80,15 +80,15 @@ data "template_file" "init_script" {
   template = file("${path.module}/init.yaml")
 
   vars = {
-    package_upgrade     = "true"
-    ghe_pat             = var.ghe_pat
-    nr_key              = var.nr_key
-    nr_account          = var.nr_account
-    ghes_base_url       = var.ghes_base_url
-    ghe_pat_ssm_name    = aws_ssm_parameter.ghes_pat_runner_reg.name
-    ghes_runner_target  = var.ghes_runner_target
-    ghes_runner_labels  = var.ghes_runner_labels
-    ghes_runner_group   = var.ghes_runner_group
+    package_upgrade    = "true"
+    ghe_pat            = var.ghe_pat
+    nr_key             = var.nr_key
+    nr_account         = var.nr_account
+    ghes_base_url      = var.ghes_base_url
+    ghe_pat_ssm_name   = aws_ssm_parameter.ghes_pat_runner_reg.name
+    ghes_runner_target = var.ghes_runner_target
+    ghes_runner_labels = var.ghes_runner_labels
+    ghes_runner_group  = var.ghes_runner_group
   }
 }
 
@@ -128,7 +128,7 @@ resource "aws_launch_template" "ghes_runner" {
 
     tags = {
       Name = "GHE_Runner_${var.environment}"
-      
+
     }
   }
 }
