@@ -20,15 +20,15 @@ data "template_file" "terminate_hook" {
   template = file("${path.module}/terminate_hook.yaml")
 
   vars = {
-    ghe_pat           = var.ghe_pat
-    ghe_pat_ssm_name  = aws_ssm_parameter.ghes_pat_runner_reg.name
-    ghes_base_url     = var.ghes_base_url
+    ghe_pat          = var.ghe_pat
+    ghe_pat_ssm_name = aws_ssm_parameter.ghes_pat_runner_reg.name
+    ghes_base_url    = var.ghes_base_url
   }
 }
 
 
 resource "aws_cloudwatch_event_rule" "terminate_hook" {
-  name_prefix       = "ghe_runner_terminate_${var.environment}_"
+  name_prefix = "ghe_runner_terminate_${var.environment}_"
   description = "Remove runner on termination"
 
   event_pattern = <<EOF
@@ -50,14 +50,14 @@ EOF
 
 resource "aws_cloudwatch_event_target" "terminate_hook" {
   target_id = "StopInstance"
-  arn       = replace("${aws_ssm_document.ghe_runner_terminate.arn}:$LATEST", "document/", "automation-definition/") 
+  arn       = replace("${aws_ssm_document.ghe_runner_terminate.arn}:$LATEST", "document/", "automation-definition/")
   rule      = aws_cloudwatch_event_rule.terminate_hook.name
   role_arn  = data.aws_iam_role.iam_cwa_role_name.arn
   input_transformer {
     input_paths = {
-      asgname   = "$.detail.AutoScalingGroupName",
+      asgname    = "$.detail.AutoScalingGroupName",
       instanceid = "$.detail.EC2InstanceId",
-      lchname   = "$.detail.LifecycleHookName",
+      lchname    = "$.detail.LifecycleHookName",
     }
     input_template = <<EOF
      {
@@ -67,7 +67,7 @@ resource "aws_cloudwatch_event_target" "terminate_hook" {
         "automationAssumeRole": ["${data.aws_iam_role.iam_ssm_role.arn}"]
      }
     EOF
-    }
+  }
 }
 
 data "aws_iam_policy_document" "ssm_lifecycle_trust" {

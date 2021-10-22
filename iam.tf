@@ -103,9 +103,9 @@ data "aws_iam_policy_document" "ghes_runner_terminate" {
 }
 
 resource "aws_iam_policy" "cw_ssm" {
-  name_prefix   = "ghes_runner_terminate_cw_event_${var.environment}_"
-  path   = "/acct-managed/"
-  policy = data.aws_iam_policy_document.ghes_runner_terminate.json
+  name_prefix = "ghes_runner_terminate_cw_event_${var.environment}_"
+  path        = "/acct-managed/"
+  policy      = data.aws_iam_policy_document.ghes_runner_terminate.json
 }
 
 resource "aws_iam_role_policy_attachment" "ghe_worker_cwe_custom" {
